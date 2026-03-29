@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { BottomNav } from '@/components/BottomNav';
+import { SidebarNav } from '@/components/SidebarNav';
 import { HomeTab } from '@/components/HomeTab';
 import { LinksTab } from '@/components/LinksTab';
 import { MenuTab } from '@/components/MenuTab';
@@ -45,26 +46,45 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-zinc-100 font-sans selection:bg-blue-200 dark:selection:bg-blue-900">
-      {/* Header */}
-      <header className="sticky top-0 z-10 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800">
-        <div className="max-w-md mx-auto px-6 h-16 flex items-center justify-center gap-2">
-          <Logo size={24} className={colorClasses.text} />
-          <h1 className={`text-xl font-bold ${colorClasses.text}`}>
+    <div className="min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-zinc-100 font-sans selection:bg-blue-200 dark:selection:bg-blue-900 flex flex-col md:flex-row">
+      
+      {/* Desktop Sidebar */}
+      <aside className="hidden md:flex flex-col w-72 border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 sticky top-0 h-screen shadow-sm z-20">
+        <div className="p-8 flex items-center gap-4 border-b border-zinc-200 dark:border-zinc-800">
+          <Logo size={36} className={colorClasses.text} />
+          <h1 className={`text-2xl font-bold ${colorClasses.text}`}>
             CofreLink
           </h1>
         </div>
-      </header>
+        <nav className="flex-1 px-6 py-8">
+          <SidebarNav activeTab={activeTab} setActiveTab={setActiveTab} color={settings.color} />
+        </nav>
+      </aside>
 
       {/* Main Content Area */}
-      <main className="pb-20 max-w-md mx-auto w-full">
-        {activeTab === 'home' && <HomeTab color={settings.color} />}
-        {activeTab === 'links' && <LinksTab color={settings.color} />}
-        {activeTab === 'menu' && <MenuTab settings={settings} />}
-      </main>
+      <div className="flex-1 flex flex-col min-h-screen relative">
+        {/* Mobile Header */}
+        <header className="md:hidden sticky top-0 z-10 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800">
+          <div className="max-w-md mx-auto px-6 h-16 flex items-center justify-center gap-2">
+            <Logo size={24} className={colorClasses.text} />
+            <h1 className={`text-xl font-bold ${colorClasses.text}`}>
+              CofreLink
+            </h1>
+          </div>
+        </header>
 
-      {/* Bottom Navigation */}
-      <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} color={settings.color} />
+        {/* Dynamic Content */}
+        <main className="flex-1 pb-24 md:pb-12 pt-4 md:pt-10 max-w-md md:max-w-3xl lg:max-w-5xl mx-auto w-full px-4 md:px-8">
+          {activeTab === 'home' && <HomeTab color={settings.color} />}
+          {activeTab === 'links' && <LinksTab color={settings.color} />}
+          {activeTab === 'menu' && <MenuTab settings={settings} />}
+        </main>
+
+        {/* Mobile Bottom Navigation */}
+        <div className="md:hidden">
+          <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} color={settings.color} />
+        </div>
+      </div>
     </div>
   );
 }

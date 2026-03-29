@@ -101,7 +101,7 @@ export function MenuTab({ settings }: { settings: any }) {
   };
 
   return (
-    <div className="p-6 animate-in fade-in duration-300 max-w-md mx-auto pb-24">
+    <div className="p-6 animate-in fade-in duration-300 w-full pb-24">
       <h2 className="text-2xl font-bold text-zinc-800 dark:text-zinc-100 mb-6">
         Menu
       </h2>
@@ -131,7 +131,7 @@ export function MenuTab({ settings }: { settings: any }) {
         <h3 className="text-lg font-medium text-zinc-800 dark:text-zinc-100">Meu Perfil</h3>
       </div>
 
-      <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Tema */}
         <div className="bg-white dark:bg-zinc-900 p-5 rounded-3xl shadow-sm border border-zinc-100 dark:border-zinc-800">
           <h4 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-4 px-1">

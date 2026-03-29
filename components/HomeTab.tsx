@@ -70,7 +70,7 @@ export function HomeTab({ color }: { color: AppColor }) {
   });
 
   return (
-    <div className="p-6 animate-in fade-in duration-300 max-w-md mx-auto pb-24 min-h-[80vh] flex flex-col">
+    <div className="animate-in fade-in duration-300 w-full pb-24 min-h-[80vh] flex flex-col">
       <div className="relative mb-6" ref={filterRef}>
         <div className="flex gap-2">
           <div className="relative flex-1">
@@ -119,7 +119,7 @@ export function HomeTab({ color }: { color: AppColor }) {
         )}
       </div>
 
-      <div className="flex-1 flex flex-col gap-4">
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 content-start">
         {filteredLinks.length > 0 ? (
           filteredLinks.map((link) => (
             <a

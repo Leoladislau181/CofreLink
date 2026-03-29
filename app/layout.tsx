@@ -4,9 +4,15 @@ import './globals.css'; // Global styles
 export const metadata: Metadata = {
   title: 'CofreLink',
   description: 'Um aplicativo para gerenciar e salvar seus links importantes de forma simples e organizada.',
+  manifest: '/manifest.json',
   icons: {
     icon: '/icon.svg',
+    apple: '/icon.svg',
   },
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#000000' },
+  ],
 };
 
 export default function RootLayout({children}: {children: React.ReactNode}) {
