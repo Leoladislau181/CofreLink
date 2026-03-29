@@ -13,34 +13,27 @@ export function useSettings() {
 
   useEffect(() => {
     const storedWelcome = localStorage.getItem('@cofrelink:welcome');
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (!storedWelcome) setHasSeenWelcome(false);
+    if (!storedWelcome) setTimeout(() => setHasSeenWelcome(false), 0);
 
     const storedTheme = localStorage.getItem('@cofrelink:theme') as AppTheme;
     if (storedTheme) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setTheme(storedTheme);
+      setTimeout(() => setTheme(storedTheme), 0);
       if (storedTheme === 'dark') document.documentElement.classList.add('dark');
       else document.documentElement.classList.remove('dark');
     } else {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (document.documentElement.classList.contains('dark')) setTheme('dark');
+      if (document.documentElement.classList.contains('dark')) setTimeout(() => setTheme('dark'), 0);
     }
 
     const storedColor = localStorage.getItem('@cofrelink:color') as AppColor;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (storedColor) setColor(storedColor);
+    if (storedColor) setTimeout(() => setColor(storedColor), 0);
 
     const storedAvatar = localStorage.getItem('@cofrelink:avatar');
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (storedAvatar) setAvatar(storedAvatar);
+    if (storedAvatar) setTimeout(() => setAvatar(storedAvatar), 0);
 
     const storedAffiliate = localStorage.getItem('@cofrelink:affiliate');
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (storedAffiliate) setAffiliateLink(storedAffiliate);
+    if (storedAffiliate) setTimeout(() => setAffiliateLink(storedAffiliate), 0);
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsLoaded(true);
+    setTimeout(() => setIsLoaded(true), 0);
   }, []);
 
   const completeWelcome = () => {

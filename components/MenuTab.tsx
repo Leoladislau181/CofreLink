@@ -15,11 +15,11 @@ export function MenuTab({ settings }: { settings: any }) {
 
   useEffect(() => {
     if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true) {
-      setIsStandalone(true);
+      setTimeout(() => setIsStandalone(true), 0);
     }
 
     const userAgent = window.navigator.userAgent.toLowerCase();
-    setIsIOS(/iphone|ipad|ipod/.test(userAgent));
+    setTimeout(() => setIsIOS(/iphone|ipad|ipod/.test(userAgent)), 0);
 
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();

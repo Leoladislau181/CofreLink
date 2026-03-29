@@ -19,14 +19,13 @@ export function useLinks() {
     const stored = localStorage.getItem('@cofrelink:links');
     if (stored) {
       try {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setLinks(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        setTimeout(() => setLinks(parsed), 0);
       } catch (e) {
         console.error('Failed to parse links from localStorage', e);
       }
     }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsLoaded(true);
+    setTimeout(() => setIsLoaded(true), 0);
   }, []);
 
   const saveLinks = (newLinks: LinkItem[]) => {

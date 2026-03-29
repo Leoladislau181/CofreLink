@@ -1,8 +1,63 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { PlusCircle, Edit2, Trash2, Check, X, ExternalLink, ChevronDown } from 'lucide-react';
 import { useLinks, LinkItem, CATEGORIES } from '@/hooks/useLinks';
 import { AppColor, getColorClasses } from '@/hooks/useSettings';
 import { ICONS, DynamicIcon } from '@/components/DynamicIcon';
+
+function CustomIconSelect({ value, onChange, colorClasses, size = 'normal' }: { value: string, onChange: (val: string) => void, colorClasses: any, size?: 'normal' | 'small' }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const paddingClass = size === 'small' ? 'py-2 px-3 pl-8' : 'py-3.5 px-4 pl-10';
+  const roundedClass = size === 'small' ? 'rounded-xl' : 'rounded-2xl';
+  const iconSize = size === 'small' ? 16 : 18;
+  const iconLeft = size === 'small' ? 'left-2.5' : 'left-3.5';
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full ${paddingClass} ${roundedClass} bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 focus:outline-none focus:ring-2 ${colorClasses.ring} transition-shadow text-zinc-900 dark:text-zinc-100 text-left flex items-center justify-between`}
+      >
+        <div className={`absolute ${iconLeft} top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none`}>
+          <DynamicIcon name={value} size={iconSize} />
+        </div>
+        <span className="block truncate">{value}</span>
+        <ChevronDown className={`text-zinc-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} size={iconSize} />
+      </button>
+
+      {isOpen && (
+        <div className={`absolute z-20 w-full mt-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-lg max-h-60 overflow-auto scrollbar-hide`}>
+          {ICONS.map((ic) => (
+            <button
+              key={ic}
+              type="button"
+              onClick={() => {
+                onChange(ic);
+                setIsOpen(false);
+              }}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors ${value === ic ? 'bg-zinc-50 dark:bg-zinc-700 font-medium' : 'text-zinc-700 dark:text-zinc-300'}`}
+            >
+              <DynamicIcon name={ic} size={18} className={value === ic ? colorClasses.text : 'text-zinc-400'} />
+              <span className={value === ic ? 'text-zinc-900 dark:text-zinc-100' : ''}>{ic}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function LinksTab({ color }: { color: AppColor }) {
   const { links, addLink, updateLink, deleteLink } = useLinks();
@@ -110,21 +165,11 @@ export function LinksTab({ color }: { color: AppColor }) {
             <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
               Ícone
             </label>
-            <div className="relative">
-              <select
-                value={icon}
-                onChange={(e) => setIcon(e.target.value)}
-                className={`w-full pl-10 pr-4 py-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 focus:outline-none focus:ring-2 ${colorClasses.ring} transition-shadow text-zinc-900 dark:text-zinc-100 appearance-none`}
-              >
-                {ICONS.map(ic => (
-                  <option key={ic} value={ic}>{ic}</option>
-                ))}
-              </select>
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none">
-                <DynamicIcon name={icon} size={18} />
-              </div>
-              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" size={18} />
-            </div>
+            <CustomIconSelect 
+              value={icon} 
+              onChange={setIcon} 
+              colorClasses={colorClasses} 
+            />
           </div>
         </div>
 
@@ -176,13 +221,12 @@ export function LinksTab({ color }: { color: AppColor }) {
                       >
                         {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                       </select>
-                      <select
-                        value={editIcon}
-                        onChange={(e) => setEditIcon(e.target.value)}
-                        className={`w-full px-3 py-2 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 focus:outline-none focus:ring-2 ${colorClasses.ring} text-sm text-zinc-900 dark:text-zinc-100`}
-                      >
-                        {ICONS.map(ic => <option key={ic} value={ic}>{ic}</option>)}
-                      </select>
+                      <CustomIconSelect 
+                        value={editIcon} 
+                        onChange={setEditIcon} 
+                        colorClasses={colorClasses} 
+                        size="small"
+                      />
                     </div>
                     <div className="flex gap-2 justify-end">
                       <button onClick={() => setEditingId(null)} className="p-2 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors">

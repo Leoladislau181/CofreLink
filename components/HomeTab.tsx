@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link2Off, Search, ExternalLink, Filter, Check } from 'lucide-react';
+import { Link2Off, Search, Share, Filter, Check } from 'lucide-react';
 import { useLinks } from '@/hooks/useLinks';
 import { AppColor, getColorClasses } from '@/hooks/useSettings';
 import { DynamicIcon } from '@/components/DynamicIcon';
@@ -22,6 +22,26 @@ export function HomeTab({ color }: { color: AppColor }) {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const handleShare = async (e: React.MouseEvent, link: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: link.name,
+          text: `Confira este link: ${link.name}`,
+          url: link.url,
+        });
+      } catch (error) {
+        console.error('Erro ao compartilhar:', error);
+      }
+    } else {
+      navigator.clipboard.writeText(link.url);
+      alert('Link copiado para a área de transferência!');
+    }
+  };
 
   if (!isLoaded) return null;
 
@@ -109,13 +129,19 @@ export function HomeTab({ color }: { color: AppColor }) {
               rel="noopener noreferrer"
               className={`group relative flex items-center justify-center w-full p-4 min-h-[64px] bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 hover:border-${color}-200 dark:hover:border-${color}-900/50 hover:shadow-md transition-all active:scale-[0.98]`}
             >
-              <div className="absolute left-4 text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transition-colors">
+              <div className={`absolute left-4 ${colorClasses.text} transition-colors`}>
                 <DynamicIcon name={link.icon || 'Link2'} size={20} />
               </div>
-              <span className="font-semibold text-zinc-800 dark:text-zinc-100 text-lg text-center px-12 truncate w-full">
+              <span className={`font-semibold ${colorClasses.text} text-lg text-center px-12 truncate w-full`}>
                 {link.name}
               </span>
-              <ExternalLink className={`absolute right-4 text-zinc-300 dark:text-zinc-600 group-hover:${colorClasses.text} transition-colors`} size={20} />
+              <button
+                onClick={(e) => handleShare(e, link)}
+                className={`absolute right-4 p-2 ${colorClasses.bg} text-white dark:text-zinc-900 transition-colors rounded-full hover:opacity-80 shadow-sm`}
+                title="Compartilhar link"
+              >
+                <Share size={18} />
+              </button>
             </a>
           ))
         ) : (
