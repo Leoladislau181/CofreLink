@@ -252,10 +252,13 @@ export function LinksTab({ color }: { color: AppColor }) {
                           <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">
                             {link.category || 'Outros'}
                           </p>
-                          <p className="text-sm text-zinc-500 dark:text-zinc-400 truncate flex items-center gap-1">
+                          <button 
+                            onClick={() => window.open(link.url, "_blank", "noopener,noreferrer")}
+                            className="text-sm text-zinc-500 dark:text-zinc-400 truncate flex items-center gap-1 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors"
+                          >
                             <ExternalLink size={12} className="shrink-0" />
-                            <span className="truncate">{link.url}</span>
-                          </p>
+                            <span className="truncate underline decoration-zinc-300 dark:decoration-zinc-700 underline-offset-2">{link.url}</span>
+                          </button>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
                           <button onClick={() => handleEdit(link)} className={`p-2 text-zinc-400 hover:${colorClasses.text} hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-xl transition-colors`}>
