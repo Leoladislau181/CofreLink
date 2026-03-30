@@ -122,10 +122,18 @@ export function HomeTab({ color }: { color: AppColor }) {
       <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 content-start">
         {filteredLinks.length > 0 ? (
           filteredLinks.map((link) => (
-            <button
+            <div
               key={link.id}
               onClick={() => window.open(link.url, "_blank", "noopener,noreferrer")}
-              className={`group relative flex items-center justify-center w-full p-4 min-h-[64px] bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 hover:border-${color}-200 dark:hover:border-${color}-900/50 hover:shadow-md transition-all active:scale-[0.98]`}
+              className={`group relative flex items-center justify-center w-full p-4 min-h-[64px] bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 hover:border-${color}-200 dark:hover:border-${color}-900/50 hover:shadow-md transition-all active:scale-[0.98] cursor-pointer`}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  window.open(link.url, "_blank", "noopener,noreferrer");
+                }
+              }}
             >
               <div className={`absolute left-4 ${colorClasses.text} transition-colors`}>
                 <DynamicIcon name={link.icon || 'Link2'} size={20} />
@@ -140,7 +148,7 @@ export function HomeTab({ color }: { color: AppColor }) {
               >
                 <Share size={18} />
               </button>
-            </button>
+            </div>
           ))
         ) : (
           <div className="text-center text-zinc-500 dark:text-zinc-400 mt-10">
