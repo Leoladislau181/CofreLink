@@ -1,7 +1,8 @@
-import { User, Sun, Moon, Link as LinkIcon, Save, Check, Copy, ExternalLink, Palette, Download, Upload, Camera, Share, PlusSquare } from 'lucide-react';
+import { User, Sun, Moon, Link as LinkIcon, Save, Check, Copy, ExternalLink, Palette, Download, Upload, Camera, Share, PlusSquare, LogOut } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { AppColor, getColorClasses } from '@/hooks/useSettings';
 import { useLinks } from '@/hooks/useLinks';
+import { supabase } from '@/lib/supabase';
 
 export function MenuTab({ settings }: { settings: any }) {
   const [showSaved, setShowSaved] = useState(false);
@@ -37,6 +38,11 @@ export function MenuTab({ settings }: { settings: any }) {
     if (outcome === 'accepted') {
       setDeferredPrompt(null);
     }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.reload();
   };
 
   const colorClasses = getColorClasses(settings.color);
@@ -269,6 +275,17 @@ export function MenuTab({ settings }: { settings: any }) {
               onChange={handleImport} 
             />
           </div>
+        </div>
+
+        {/* Sair */}
+        <div className="bg-white dark:bg-zinc-900 p-5 rounded-3xl shadow-sm border border-zinc-100 dark:border-zinc-800">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl font-medium bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+          >
+            <LogOut size={18} />
+            Sair da conta
+          </button>
         </div>
 
       </div>
