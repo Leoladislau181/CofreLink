@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/components/AuthProvider';
 
 export interface LinkItem {
   id: string;
@@ -7,6 +9,7 @@ export interface LinkItem {
   category: string;
   icon: string;
   createdAt: number;
+  user_id: string;
 }
 
 export const CATEGORIES = ['Trabalho', 'Estudos', 'Compras', 'Vídeos', 'Redes Sociais', 'Outros'];
@@ -14,46 +17,88 @@ export const CATEGORIES = ['Trabalho', 'Estudos', 'Compras', 'Vídeos', 'Redes S
 export function useLinks() {
   const [links, setLinks] = useState<LinkItem[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
-    const stored = localStorage.getItem('@cofrelink:links');
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        setTimeout(() => setLinks(parsed), 0);
-      } catch (e) {
-        console.error('Failed to parse links from localStorage', e);
-      }
+    if (!user) {
+      setLinks([]);
+      setIsLoaded(true);
+      return;
     }
-    setTimeout(() => setIsLoaded(true), 0);
-  }, []);
 
-  const saveLinks = (newLinks: LinkItem[]) => {
-    setLinks(newLinks);
-    localStorage.setItem('@cofrelink:links', JSON.stringify(newLinks));
-  };
+    const fetchLinks = async () => {
+      const { data, error } = await supabase
+        .from('links')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true });
 
-  const addLink = (name: string, url: string, category: string, icon: string) => {
+      if (error) {
+        console.error('Error fetching links:', error);
+      } else {
+        setLinks(data || []);
+      }
+      setIsLoaded(true);
+    };
+
+    fetchLinks();
+  }, [user]);
+
+  const addLink = async (name: string, url: string, category: string, icon: string) => {
+    if (!user) return;
     const formattedUrl = url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`;
     
-    const newLink: LinkItem = {
-      id: crypto.randomUUID(),
+    const newLink = {
+      user_id: user.id,
       name,
       url: formattedUrl,
       category: category || 'Outros',
       icon: icon || 'Link2',
-      createdAt: Date.now(),
     };
-    saveLinks([...links, newLink]);
+
+    const { data, error } = await supabase
+      .from('links')
+      .insert([newLink])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error adding link:', error);
+    } else if (data) {
+      setLinks([...links, data]);
+    }
   };
 
-  const updateLink = (id: string, name: string, url: string, category: string, icon: string) => {
+  const updateLink = async (id: string, name: string, url: string, category: string, icon: string) => {
+    if (!user) return;
     const formattedUrl = url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`;
-    saveLinks(links.map(link => link.id === id ? { ...link, name, url: formattedUrl, category, icon } : link));
+    
+    const { error } = await supabase
+      .from('links')
+      .update({ name, url: formattedUrl, category, icon })
+      .eq('id', id)
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('Error updating link:', error);
+    } else {
+      setLinks(links.map(link => link.id === id ? { ...link, name, url: formattedUrl, category, icon } : link));
+    }
   };
 
-  const deleteLink = (id: string) => {
-    saveLinks(links.filter(link => link.id !== id));
+  const deleteLink = async (id: string) => {
+    if (!user) return;
+    const { error } = await supabase
+      .from('links')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('Error deleting link:', error);
+    } else {
+      setLinks(links.filter(link => link.id !== id));
+    }
   };
 
   const exportLinks = () => {
@@ -66,15 +111,29 @@ export function useLinks() {
     downloadAnchorNode.remove();
   };
 
-  const importLinks = (jsonString: string) => {
+  const importLinks = async (jsonString: string) => {
+    if (!user) return false;
     try {
       const parsed = JSON.parse(jsonString);
       if (Array.isArray(parsed)) {
-        const validLinks = parsed.filter(l => l.id && l.name && l.url);
-        // Merge with existing or replace? Let's replace for simplicity, or merge. Let's merge and deduplicate by ID.
-        const existingIds = new Set(links.map(l => l.id));
-        const newLinks = validLinks.filter(l => !existingIds.has(l.id));
-        saveLinks([...links, ...newLinks]);
+        const validLinks = parsed.map(l => ({
+          user_id: user.id,
+          name: l.name,
+          url: l.url,
+          category: l.category || 'Outros',
+          icon: l.icon || 'Link2',
+        }));
+        
+        const { data, error } = await supabase
+          .from('links')
+          .insert(validLinks)
+          .select();
+
+        if (error) {
+          console.error('Error importing links:', error);
+          return false;
+        }
+        setLinks([...links, ...data]);
         return true;
       }
     } catch (e) {
