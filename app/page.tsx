@@ -8,16 +8,22 @@ import { LinksTab } from '@/components/LinksTab';
 import { MenuTab } from '@/components/MenuTab';
 import { Logo } from '@/components/Logo';
 import { useSettings, getColorClasses } from '@/hooks/useSettings';
+import { useAuth } from '@/components/AuthProvider';
+import { Login } from '@/components/Login';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('home');
   const settings = useSettings();
+  const { user, loading } = useAuth();
 
   useEffect(() => {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(console.error);
     }
   }, []);
+
+  if (loading) return null;
+  if (!user) return <Login />;
 
   if (!settings.isLoaded) return null;
 
