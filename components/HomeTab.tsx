@@ -3,12 +3,14 @@ import { Link2Off, Search, Share, Filter, Check } from 'lucide-react';
 import { useLinks } from '@/hooks/useLinks';
 import { AppColor, getColorClasses } from '@/hooks/useSettings';
 import { DynamicIcon } from '@/components/DynamicIcon';
+import { Toast } from '@/components/Toast';
 
 export function HomeTab({ color, name }: { color: AppColor, name?: string }) {
   const { links, isLoaded } = useLinks();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [toast, setToast] = useState<{ message: string, type: 'success' | 'info' } | null>(null);
   const filterRef = useRef<HTMLDivElement>(null);
 
   const colorClasses = getColorClasses(color);
@@ -39,7 +41,8 @@ export function HomeTab({ color, name }: { color: AppColor, name?: string }) {
       }
     } else {
       navigator.clipboard.writeText(link.url);
-      alert('Link copiado para a área de transferência!');
+      setToast({ message: 'Link copiado para a área de transferência!', type: 'success' });
+      setTimeout(() => setToast(null), 3000);
     }
   };
 
@@ -168,6 +171,15 @@ export function HomeTab({ color, name }: { color: AppColor, name?: string }) {
           </div>
         )}
       </div>
+
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          color={color} 
+          onClose={() => setToast(null)} 
+        />
+      )}
     </div>
   );
 }

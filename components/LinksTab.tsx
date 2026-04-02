@@ -3,6 +3,8 @@ import { PlusCircle, Edit2, Trash2, Check, X, ExternalLink, ChevronDown } from '
 import { useLinks, LinkItem, CATEGORIES } from '@/hooks/useLinks';
 import { AppColor, getColorClasses } from '@/hooks/useSettings';
 import { ICONS, DynamicIcon } from '@/components/DynamicIcon';
+import { Modal } from '@/components/Modal';
+import { Toast } from '@/components/Toast';
 
 function CustomIconSelect({ value, onChange, colorClasses, size = 'normal' }: { value: string, onChange: (val: string) => void, colorClasses: any, size?: 'normal' | 'small' }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -65,7 +67,7 @@ export function LinksTab({ color }: { color: AppColor }) {
   const [url, setUrl] = useState('');
   const [category, setCategory] = useState(CATEGORIES[0]);
   const [icon, setIcon] = useState('Link2');
-  const [showSuccess, setShowSuccess] = useState(false);
+  const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
 
   // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -74,17 +76,20 @@ export function LinksTab({ color }: { color: AppColor }) {
   const [editCategory, setEditCategory] = useState('');
   const [editIcon, setEditIcon] = useState('');
 
+  // Delete state
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
   const colorClasses = getColorClasses(color);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name.trim() || !url.trim()) return;
-    addLink(name, url, category, icon);
+    await addLink(name, url, category, icon);
     setName('');
     setUrl('');
     setCategory(CATEGORIES[0]);
     setIcon('Link2');
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
+    setToast({ message: 'Link salvo com sucesso!', type: 'success' });
+    setTimeout(() => setToast(null), 3000);
   };
 
   const handleEdit = (link: LinkItem) => {
@@ -95,15 +100,20 @@ export function LinksTab({ color }: { color: AppColor }) {
     setEditIcon(link.icon || 'Link2');
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editingId || !editName.trim() || !editUrl.trim()) return;
-    updateLink(editingId, editName, editUrl, editCategory, editIcon);
+    await updateLink(editingId, editName, editUrl, editCategory, editIcon);
     setEditingId(null);
+    setToast({ message: 'Link atualizado com sucesso!', type: 'success' });
+    setTimeout(() => setToast(null), 3000);
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Deseja realmente excluir este link?')) {
-      deleteLink(id);
+  const confirmDelete = () => {
+    if (deletingId) {
+      deleteLink(deletingId);
+      setDeletingId(null);
+      setToast({ message: 'Link excluído com sucesso!', type: 'success' });
+      setTimeout(() => setToast(null), 3000);
     }
   };
 
@@ -184,12 +194,6 @@ export function LinksTab({ color }: { color: AppColor }) {
             <PlusCircle size={20} />
             Salvar Link
           </button>
-
-          {showSuccess && (
-            <div className="text-sm text-green-600 dark:text-green-400 text-center font-medium animate-in fade-in slide-in-from-top-2">
-              Link salvo com sucesso!
-            </div>
-          )}
         </div>
 
         {/* List Section */}
@@ -264,7 +268,7 @@ export function LinksTab({ color }: { color: AppColor }) {
                           <button onClick={() => handleEdit(link)} className={`p-2 text-zinc-400 hover:${colorClasses.text} hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-xl transition-colors`}>
                             <Edit2 size={18} />
                           </button>
-                          <button onClick={() => handleDelete(link.id)} className="p-2 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors">
+                          <button onClick={() => setDeletingId(link.id)} className="p-2 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors">
                             <Trash2 size={18} />
                           </button>
                         </div>
@@ -281,6 +285,27 @@ export function LinksTab({ color }: { color: AppColor }) {
           )}
         </div>
       </div>
+
+      <Modal
+        isOpen={!!deletingId}
+        onClose={() => setDeletingId(null)}
+        onConfirm={confirmDelete}
+        title="Excluir Link"
+        confirmLabel="Excluir"
+        variant="danger"
+        color={color}
+      >
+        Deseja realmente excluir este link? Esta ação não pode ser desfeita.
+      </Modal>
+
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          color={color} 
+          onClose={() => setToast(null)} 
+        />
+      )}
     </div>
   );
 }

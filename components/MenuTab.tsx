@@ -3,13 +3,16 @@ import { useState, useRef, useEffect } from 'react';
 import { AppColor, getColorClasses } from '@/hooks/useSettings';
 import { useLinks } from '@/hooks/useLinks';
 import { supabase } from '@/lib/supabase';
+import { Modal } from '@/components/Modal';
+import { Toast } from '@/components/Toast';
 
 export function MenuTab({ settings }: { settings: any }) {
-  const [showSaved, setShowSaved] = useState(false);
+  const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' | 'info' } | null>(null);
   const [showCopied, setShowCopied] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
   const { exportLinks, importLinks } = useLinks();
@@ -60,6 +63,8 @@ export function MenuTab({ settings }: { settings: any }) {
       const reader = new FileReader();
       reader.onloadend = () => {
         settings.updateAvatar(reader.result as string);
+        setToast({ message: 'Avatar atualizado!', type: 'success' });
+        setTimeout(() => setToast(null), 3000);
       };
       reader.readAsDataURL(file);
     }
@@ -72,10 +77,11 @@ export function MenuTab({ settings }: { settings: any }) {
       reader.onloadend = async () => {
         const success = await importLinks(reader.result as string);
         if (success) {
-          alert('Links importados com sucesso!');
+          setToast({ message: 'Links importados com sucesso!', type: 'success' });
         } else {
-          alert('Erro ao importar links. Verifique o arquivo.');
+          setToast({ message: 'Erro ao importar links. Verifique o arquivo.', type: 'error' });
         }
+        setTimeout(() => setToast(null), 3000);
         if (importInputRef.current) importInputRef.current.value = '';
       };
       reader.readAsText(file);
@@ -86,7 +92,11 @@ export function MenuTab({ settings }: { settings: any }) {
     const url = window.location.origin;
     navigator.clipboard.writeText(url);
     setShowCopied(true);
-    setTimeout(() => setShowCopied(false), 2000);
+    setToast({ message: 'Link copiado!', type: 'success' });
+    setTimeout(() => {
+      setShowCopied(false);
+      setToast(null);
+    }, 2000);
   };
 
   const shareReferralLink = async () => {
@@ -289,7 +299,7 @@ export function MenuTab({ settings }: { settings: any }) {
         {/* Sair */}
         <div className="bg-white dark:bg-zinc-900 p-5 rounded-3xl shadow-sm border border-zinc-100 dark:border-zinc-800">
           <button
-            onClick={handleLogout}
+            onClick={() => setShowLogoutModal(true)}
             className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl font-medium bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
           >
             <LogOut size={18} />
@@ -298,6 +308,27 @@ export function MenuTab({ settings }: { settings: any }) {
         </div>
 
       </div>
+
+      <Modal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={handleLogout}
+        title="Sair da Conta"
+        confirmLabel="Sair"
+        variant="danger"
+        color={settings.color}
+      >
+        Tem certeza que deseja sair da sua conta? Você precisará fazer login novamente para acessar seus links.
+      </Modal>
+
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          color={settings.color} 
+          onClose={() => setToast(null)} 
+        />
+      )}
     </div>
   );
 }
