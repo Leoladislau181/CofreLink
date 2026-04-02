@@ -69,8 +69,8 @@ export function MenuTab({ settings }: { settings: any }) {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        const success = importLinks(reader.result as string);
+      reader.onloadend = async () => {
+        const success = await importLinks(reader.result as string);
         if (success) {
           alert('Links importados com sucesso!');
         } else {
