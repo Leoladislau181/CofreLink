@@ -1,34 +1,29 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link2Off, Search, Share, Filter, Check } from 'lucide-react';
-import { useLinks } from '@/hooks/useLinks';
+import { Link2Off, MoreVertical, Share, Filter, Check } from 'lucide-react';
+import { useLinks, LinkItem } from '@/hooks/useLinks';
 import { AppColor, getColorClasses } from '@/hooks/useSettings';
 import { DynamicIcon } from '@/components/DynamicIcon';
 import { Toast } from '@/components/Toast';
+import { LinkActionMenu } from '@/components/LinkActionMenu';
+import { Modal } from '@/components/Modal';
 
-export function HomeTab({ color, name }: { color: AppColor, name?: string }) {
-  const { links, isLoaded } = useLinks();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+interface HomeTabProps {
+  color: AppColor;
+  name?: string;
+  searchQuery: string;
+  selectedCategory: string | null;
+  onEdit: (link: LinkItem) => void;
+}
+
+export function HomeTab({ color, name, searchQuery, selectedCategory, onEdit }: HomeTabProps) {
+  const { links, isLoaded, deleteLink } = useLinks();
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'info' } | null>(null);
-  const filterRef = useRef<HTMLDivElement>(null);
+  const [activeActionLink, setActiveActionLink] = useState<LinkItem | null>(null);
+  const [deletingLink, setDeletingLink] = useState<LinkItem | null>(null);
 
   const colorClasses = getColorClasses(color);
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
-        setIsFilterOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleShare = async (e: React.MouseEvent, link: any) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
+  const handleShare = async (link: LinkItem) => {
     if (navigator.share) {
       try {
         await navigator.share({
@@ -46,6 +41,15 @@ export function HomeTab({ color, name }: { color: AppColor, name?: string }) {
     }
   };
 
+  const handleDelete = async () => {
+    if (deletingLink) {
+      await deleteLink(deletingLink.id);
+      setDeletingLink(null);
+      setToast({ message: 'Link excluído com sucesso!', type: 'success' });
+      setTimeout(() => setToast(null), 3000);
+    }
+  };
+
   if (!isLoaded) return null;
 
   if (links.length === 0) {
@@ -55,19 +59,17 @@ export function HomeTab({ color, name }: { color: AppColor, name?: string }) {
           <Link2Off className="w-10 h-10 text-zinc-400 dark:text-zinc-500" />
         </div>
         <h2 className="text-xl font-semibold text-zinc-800 dark:text-zinc-100 mb-2">
-          {name ? `Olá, ${name}!` : 'Bem-vindo!'}
+          Bem-vindo!
         </h2>
         <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-[250px] mb-2">
           Nenhum link cadastrado ainda.
         </p>
         <p className="text-xs text-zinc-400 dark:text-zinc-500 max-w-[250px]">
-          Vá para a aba Links para adicionar seus primeiros botões.
+          Toque no botão &quot;+&quot; abaixo para adicionar seus primeiros botões.
         </p>
       </div>
     );
   }
-
-  const usedCategories = Array.from(new Set(links.map(l => l.category || 'Outros')));
 
   const filteredLinks = links.filter(link => {
     const matchesSearch = link.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -79,59 +81,11 @@ export function HomeTab({ color, name }: { color: AppColor, name?: string }) {
     <div className="animate-in fade-in duration-300 w-full pb-24 min-h-[80vh] flex flex-col">
       <div className="mb-6 px-1">
         <h2 className="text-2xl font-bold text-zinc-800 dark:text-zinc-100">
-          {name ? `Olá, ${name}` : 'Meus Links'}
+          Meus Links
         </h2>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
           {links.length} {links.length === 1 ? 'link salvo' : 'links salvos'}
         </p>
-      </div>
-
-      <div className="relative mb-6" ref={filterRef}>
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-zinc-400" />
-            </div>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Pesquisar links..."
-              className={`w-full pl-11 pr-4 py-3.5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:ring-2 ${colorClasses.ring} transition-shadow text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 shadow-sm`}
-            />
-          </div>
-          
-          {usedCategories.length > 0 && (
-            <button
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`shrink-0 w-[52px] h-[52px] flex items-center justify-center rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm transition-colors ${selectedCategory ? `${colorClasses.bg} ${colorClasses.textInvert} border-transparent` : 'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800'}`}
-            >
-              <Filter size={20} />
-            </button>
-          )}
-        </div>
-
-        {isFilterOpen && (
-          <div className="absolute top-[60px] right-0 w-48 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-lg z-20 py-2 animate-in fade-in slide-in-from-top-2">
-            <button
-              onClick={() => { setSelectedCategory(null); setIsFilterOpen(false); }}
-              className={`w-full flex items-center justify-between px-4 py-2.5 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors ${!selectedCategory ? `font-bold ${colorClasses.text}` : 'text-zinc-700 dark:text-zinc-300'}`}
-            >
-              <span>Todos</span>
-              {!selectedCategory && <Check size={16} />}
-            </button>
-            {usedCategories.map(cat => (
-              <button
-                key={cat}
-                onClick={() => { setSelectedCategory(cat); setIsFilterOpen(false); }}
-                className={`w-full flex items-center justify-between px-4 py-2.5 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors ${selectedCategory === cat ? `font-bold ${colorClasses.text}` : 'text-zinc-700 dark:text-zinc-300'}`}
-              >
-                <span>{cat}</span>
-                {selectedCategory === cat && <Check size={16} />}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
       <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 content-start">
@@ -157,11 +111,15 @@ export function HomeTab({ color, name }: { color: AppColor, name?: string }) {
                 {link.name}
               </span>
               <button
-                onClick={(e) => handleShare(e, link)}
-                className={`absolute right-4 p-2 ${colorClasses.bg} text-white dark:text-zinc-900 transition-colors rounded-full hover:opacity-80 shadow-sm`}
-                title="Compartilhar link"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setActiveActionLink(link);
+                }}
+                className={`absolute right-4 p-2 text-zinc-400 hover:${colorClasses.text} transition-colors rounded-full hover:bg-zinc-50 dark:hover:bg-zinc-800`}
+                title="Mais opções"
               >
-                <Share size={18} />
+                <MoreVertical size={20} />
               </button>
             </div>
           ))
@@ -171,6 +129,28 @@ export function HomeTab({ color, name }: { color: AppColor, name?: string }) {
           </div>
         )}
       </div>
+
+      <LinkActionMenu
+        isOpen={!!activeActionLink}
+        onClose={() => setActiveActionLink(null)}
+        link={activeActionLink}
+        color={color}
+        onShare={handleShare}
+        onEdit={(link) => onEdit(link)}
+        onDelete={(link) => setDeletingLink(link)}
+      />
+
+      <Modal
+        isOpen={!!deletingLink}
+        onClose={() => setDeletingLink(null)}
+        onConfirm={handleDelete}
+        title="Excluir Link"
+        confirmLabel="Excluir"
+        variant="danger"
+        color={color}
+      >
+        Deseja realmente excluir este link? Esta ação não pode ser desfeita.
+      </Modal>
 
       {toast && (
         <Toast 
