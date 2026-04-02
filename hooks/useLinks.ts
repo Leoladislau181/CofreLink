@@ -21,8 +21,7 @@ export function useLinks() {
 
   useEffect(() => {
     if (!user) {
-      setLinks([]);
-      setIsLoaded(true);
+      setTimeout(() => setIsLoaded(true), 0);
       return;
     }
 

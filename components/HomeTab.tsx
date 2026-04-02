@@ -4,7 +4,7 @@ import { useLinks } from '@/hooks/useLinks';
 import { AppColor, getColorClasses } from '@/hooks/useSettings';
 import { DynamicIcon } from '@/components/DynamicIcon';
 
-export function HomeTab({ color }: { color: AppColor }) {
+export function HomeTab({ color, name }: { color: AppColor, name?: string }) {
   const { links, isLoaded } = useLinks();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -52,9 +52,12 @@ export function HomeTab({ color }: { color: AppColor }) {
           <Link2Off className="w-10 h-10 text-zinc-400 dark:text-zinc-500" />
         </div>
         <h2 className="text-xl font-semibold text-zinc-800 dark:text-zinc-100 mb-2">
-          Nenhum link cadastrado ainda
+          {name ? `Olá, ${name}!` : 'Bem-vindo!'}
         </h2>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-[250px]">
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-[250px] mb-2">
+          Nenhum link cadastrado ainda.
+        </p>
+        <p className="text-xs text-zinc-400 dark:text-zinc-500 max-w-[250px]">
           Vá para a aba Links para adicionar seus primeiros botões.
         </p>
       </div>
@@ -71,6 +74,15 @@ export function HomeTab({ color }: { color: AppColor }) {
 
   return (
     <div className="animate-in fade-in duration-300 w-full pb-24 min-h-[80vh] flex flex-col">
+      <div className="mb-6 px-1">
+        <h2 className="text-2xl font-bold text-zinc-800 dark:text-zinc-100">
+          {name ? `Olá, ${name}` : 'Meus Links'}
+        </h2>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          {links.length} {links.length === 1 ? 'link salvo' : 'links salvos'}
+        </p>
+      </div>
+
       <div className="relative mb-6" ref={filterRef}>
         <div className="flex gap-2">
           <div className="relative flex-1">

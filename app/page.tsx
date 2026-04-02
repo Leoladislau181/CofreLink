@@ -81,7 +81,7 @@ export default function App() {
 
         {/* Dynamic Content */}
         <main className="flex-1 pb-24 md:pb-12 pt-4 md:pt-10 max-w-md md:max-w-3xl lg:max-w-5xl mx-auto w-full px-4 md:px-8">
-          {activeTab === 'home' && <HomeTab color={settings.color} />}
+          {activeTab === 'home' && <HomeTab color={settings.color} name={settings.name} />}
           {activeTab === 'links' && <LinksTab color={settings.color} />}
           {activeTab === 'menu' && <MenuTab settings={settings} />}
         </main>

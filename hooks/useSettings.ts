@@ -1,67 +1,105 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/components/AuthProvider';
 
 export type AppColor = 'blue' | 'green' | 'purple' | 'red' | 'black';
 export type AppTheme = 'light' | 'dark';
 
 export function useSettings() {
+  const { user } = useAuth();
   const [hasSeenWelcome, setHasSeenWelcome] = useState(true);
   const [theme, setTheme] = useState<AppTheme>('light');
   const [color, setColor] = useState<AppColor>('blue');
   const [avatar, setAvatar] = useState<string | null>(null);
+  const [name, setName] = useState('');
   const [affiliateLink, setAffiliateLink] = useState('');
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    const storedWelcome = localStorage.getItem('@cofrelink:welcome');
-    if (!storedWelcome) setTimeout(() => setHasSeenWelcome(false), 0);
-
-    const storedTheme = localStorage.getItem('@cofrelink:theme') as AppTheme;
-    if (storedTheme) {
-      setTimeout(() => setTheme(storedTheme), 0);
-      if (storedTheme === 'dark') document.documentElement.classList.add('dark');
-      else document.documentElement.classList.remove('dark');
-    } else {
-      if (document.documentElement.classList.contains('dark')) setTimeout(() => setTheme('dark'), 0);
+    if (!user) {
+      setTimeout(() => setIsLoaded(true), 0);
+      return;
     }
 
-    const storedColor = localStorage.getItem('@cofrelink:color') as AppColor;
-    if (storedColor) setTimeout(() => setColor(storedColor), 0);
+    const fetchProfile = async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
 
-    const storedAvatar = localStorage.getItem('@cofrelink:avatar');
-    if (storedAvatar) setTimeout(() => setAvatar(storedAvatar), 0);
+      if (error) {
+        console.error('Error fetching profile:', error);
+      } else if (data) {
+        setTheme(data.theme || 'light');
+        setColor(data.color || 'blue');
+        setAvatar(data.avatar_url || null);
+        setName(data.name || '');
+        setAffiliateLink(data.affiliate_link || '');
+        setHasSeenWelcome(true); // If they have a profile, they've seen welcome
 
-    const storedAffiliate = localStorage.getItem('@cofrelink:affiliate');
-    if (storedAffiliate) setTimeout(() => setAffiliateLink(storedAffiliate), 0);
+        if (data.theme === 'dark') document.documentElement.classList.add('dark');
+        else document.documentElement.classList.remove('dark');
+      } else {
+        // No profile found, show welcome
+        setHasSeenWelcome(false);
+      }
+      setIsLoaded(true);
+    };
 
-    setTimeout(() => setIsLoaded(true), 0);
-  }, []);
+    fetchProfile();
+  }, [user]);
 
-  const completeWelcome = () => {
-    localStorage.setItem('@cofrelink:welcome', 'true');
-    setHasSeenWelcome(true);
+  const updateProfile = async (updates: any) => {
+    if (!user) return;
+    const { error } = await supabase
+      .from('profiles')
+      .update(updates)
+      .eq('id', user.id);
+
+    if (error) {
+      console.error('Error updating profile:', error);
+    }
+  };
+
+  const completeWelcome = async () => {
+    if (!user) return;
+    const { error } = await supabase
+      .from('profiles')
+      .insert([{ id: user.id, theme, color, name, avatar_url: avatar, affiliate_link: affiliateLink }]);
+
+    if (error) {
+      console.error('Error creating profile:', error);
+    } else {
+      setHasSeenWelcome(true);
+    }
   };
 
   const updateTheme = (newTheme: AppTheme) => {
     setTheme(newTheme);
-    localStorage.setItem('@cofrelink:theme', newTheme);
+    updateProfile({ theme: newTheme });
     if (newTheme === 'dark') document.documentElement.classList.add('dark');
     else document.documentElement.classList.remove('dark');
   };
 
   const updateColor = (newColor: AppColor) => {
     setColor(newColor);
-    localStorage.setItem('@cofrelink:color', newColor);
+    updateProfile({ color: newColor });
   };
 
   const updateAvatar = (newAvatar: string | null) => {
     setAvatar(newAvatar);
-    if (newAvatar) localStorage.setItem('@cofrelink:avatar', newAvatar);
-    else localStorage.removeItem('@cofrelink:avatar');
+    updateProfile({ avatar_url: newAvatar });
+  };
+
+  const updateName = (newName: string) => {
+    setName(newName);
+    updateProfile({ name: newName });
   };
 
   const updateAffiliateLink = (newLink: string) => {
     setAffiliateLink(newLink);
-    localStorage.setItem('@cofrelink:affiliate', newLink);
+    updateProfile({ affiliate_link: newLink });
   };
 
   return {
@@ -69,6 +107,7 @@ export function useSettings() {
     theme, updateTheme,
     color, updateColor,
     avatar, updateAvatar,
+    name, updateName,
     affiliateLink, updateAffiliateLink,
     isLoaded
   };

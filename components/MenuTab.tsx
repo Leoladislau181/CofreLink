@@ -134,7 +134,16 @@ export function MenuTab({ settings }: { settings: any }) {
           ref={fileInputRef} 
           onChange={handleAvatarChange} 
         />
-        <h3 className="text-lg font-medium text-zinc-800 dark:text-zinc-100">Meu Perfil</h3>
+        <div className="w-full max-w-xs text-center">
+          <input
+            type="text"
+            value={settings.name}
+            onChange={(e) => settings.updateName(e.target.value)}
+            placeholder="Seu Nome"
+            className="text-lg font-medium text-zinc-800 dark:text-zinc-100 bg-transparent border-b border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 focus:border-blue-500 focus:outline-none text-center w-full px-2 py-1 transition-colors"
+          />
+          <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Toque para editar seu nome</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
