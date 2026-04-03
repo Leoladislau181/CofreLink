@@ -1,10 +1,8 @@
-const CACHE_NAME = 'cofrelink-v1';
+const CACHE_NAME = 'cofrelink-v2';
 const ASSETS_TO_CACHE = [
   '/',
-  '/index.html',
   '/manifest.json',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
+  '/icon.svg',
 ];
 
 self.addEventListener('install', (event) => {

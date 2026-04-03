@@ -80,8 +80,12 @@ export function useSettings() {
     // Update local cache first
     const cachedSettings = localStorage.getItem(`settings_${user.id}`);
     if (cachedSettings) {
-      const current = JSON.parse(cachedSettings);
-      localStorage.setItem(`settings_${user.id}`, JSON.stringify({ ...current, ...updates }));
+      try {
+        const current = JSON.parse(cachedSettings);
+        localStorage.setItem(`settings_${user.id}`, JSON.stringify({ ...current, ...updates }));
+      } catch (e) {
+        console.error('Error updating cached settings:', e);
+      }
     }
 
     const { error } = await supabase
@@ -90,7 +94,7 @@ export function useSettings() {
       .eq('id', user.id);
 
     if (error) {
-      console.error('Error updating profile:', error);
+      console.error('Error updating profile in Supabase:', error);
     }
   };
 

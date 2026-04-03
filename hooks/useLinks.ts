@@ -19,7 +19,7 @@ export function useLinks() {
   const [isLoaded, setIsLoaded] = useState(false);
   const { user } = useAuth();
 
-  // Load from localStorage on mount
+  // Load from localStorage on mount and fetch from Supabase
   useEffect(() => {
     if (!user) {
       setTimeout(() => setIsLoaded(true), 0);
@@ -91,7 +91,7 @@ export function useLinks() {
 
     if (error) {
       console.error('Error adding link to Supabase:', error);
-      // We keep the local version, but maybe we should mark it as "not synced"
+      // We keep the local version for now
     } else if (data) {
       // Replace temp link with real data from server
       const finalLinks = updatedLinks.map(l => l.id === tempId ? data : l);
