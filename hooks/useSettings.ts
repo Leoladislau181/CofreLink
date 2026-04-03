@@ -15,13 +15,36 @@ export function useSettings() {
   const [affiliateLink, setAffiliateLink] = useState('');
   const [isLoaded, setIsLoaded] = useState(false);
 
+  // Load from localStorage on mount and fetch from Supabase
   useEffect(() => {
     if (!user) {
       setTimeout(() => setIsLoaded(true), 0);
       return;
     }
 
-    const fetchProfile = async () => {
+    const loadAndFetch = async () => {
+      // 1. Try to load from cache first
+      const cachedSettings = localStorage.getItem(`settings_${user.id}`);
+      if (cachedSettings) {
+        try {
+          const data = JSON.parse(cachedSettings);
+          setTheme(data.theme || 'light');
+          setColor(data.color || 'blue');
+          setAvatar(data.avatar_url || null);
+          setName(data.name || '');
+          setAffiliateLink(data.affiliate_link || '');
+          setHasSeenWelcome(true);
+          
+          if (data.theme === 'dark') document.documentElement.classList.add('dark');
+          else document.documentElement.classList.remove('dark');
+          
+          setIsLoaded(true);
+        } catch (e) {
+          console.error('Error parsing cached settings:', e);
+        }
+      }
+
+      // 2. Fetch from Supabase in background
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -36,22 +59,31 @@ export function useSettings() {
         setAvatar(data.avatar_url || null);
         setName(data.name || '');
         setAffiliateLink(data.affiliate_link || '');
-        setHasSeenWelcome(true); // If they have a profile, they've seen welcome
+        setHasSeenWelcome(true);
+
+        localStorage.setItem(`settings_${user.id}`, JSON.stringify(data));
 
         if (data.theme === 'dark') document.documentElement.classList.add('dark');
         else document.documentElement.classList.remove('dark');
       } else {
-        // No profile found, show welcome
         setHasSeenWelcome(false);
       }
       setIsLoaded(true);
     };
 
-    fetchProfile();
+    loadAndFetch();
   }, [user]);
 
   const updateProfile = async (updates: any) => {
     if (!user) return;
+    
+    // Update local cache first
+    const cachedSettings = localStorage.getItem(`settings_${user.id}`);
+    if (cachedSettings) {
+      const current = JSON.parse(cachedSettings);
+      localStorage.setItem(`settings_${user.id}`, JSON.stringify({ ...current, ...updates }));
+    }
+
     const { error } = await supabase
       .from('profiles')
       .update(updates)

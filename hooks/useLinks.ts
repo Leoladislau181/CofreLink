@@ -19,13 +19,26 @@ export function useLinks() {
   const [isLoaded, setIsLoaded] = useState(false);
   const { user } = useAuth();
 
+  // Load from localStorage on mount
   useEffect(() => {
     if (!user) {
       setTimeout(() => setIsLoaded(true), 0);
       return;
     }
 
-    const fetchLinks = async () => {
+    const loadAndFetch = async () => {
+      // 1. Try to load from cache first
+      const cachedLinks = localStorage.getItem(`links_${user.id}`);
+      if (cachedLinks) {
+        try {
+          setLinks(JSON.parse(cachedLinks));
+          setIsLoaded(true);
+        } catch (e) {
+          console.error('Error parsing cached links:', e);
+        }
+      }
+
+      // 2. Fetch from Supabase in background
       const { data, error } = await supabase
         .from('links')
         .select('*')
@@ -34,37 +47,56 @@ export function useLinks() {
 
       if (error) {
         console.error('Error fetching links:', error);
-      } else {
-        setLinks(data || []);
+      } else if (data) {
+        setLinks(data);
+        localStorage.setItem(`links_${user.id}`, JSON.stringify(data));
       }
       setIsLoaded(true);
     };
 
-    fetchLinks();
+    loadAndFetch();
   }, [user]);
 
   const addLink = async (name: string, url: string, category: string, icon: string) => {
     if (!user) return;
     const formattedUrl = url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`;
     
-    const newLink = {
+    // Optimistic update
+    const tempId = Math.random().toString(36).substring(2, 15);
+    const newLinkObj: LinkItem = {
+      id: tempId,
       user_id: user.id,
       name,
       url: formattedUrl,
       category: category || 'Outros',
       icon: icon || 'Link2',
+      createdAt: Date.now(),
     };
+
+    const updatedLinks = [...links, newLinkObj];
+    setLinks(updatedLinks);
+    localStorage.setItem(`links_${user.id}`, JSON.stringify(updatedLinks));
 
     const { data, error } = await supabase
       .from('links')
-      .insert([newLink])
+      .insert([{
+        user_id: user.id,
+        name,
+        url: formattedUrl,
+        category: category || 'Outros',
+        icon: icon || 'Link2',
+      }])
       .select()
       .single();
 
     if (error) {
-      console.error('Error adding link:', error);
+      console.error('Error adding link to Supabase:', error);
+      // We keep the local version, but maybe we should mark it as "not synced"
     } else if (data) {
-      setLinks([...links, data]);
+      // Replace temp link with real data from server
+      const finalLinks = updatedLinks.map(l => l.id === tempId ? data : l);
+      setLinks(finalLinks);
+      localStorage.setItem(`links_${user.id}`, JSON.stringify(finalLinks));
     }
   };
 
@@ -72,6 +104,13 @@ export function useLinks() {
     if (!user) return;
     const formattedUrl = url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`;
     
+    // Optimistic update
+    const updatedLinks = links.map(link => 
+      link.id === id ? { ...link, name, url: formattedUrl, category, icon } : link
+    );
+    setLinks(updatedLinks);
+    localStorage.setItem(`links_${user.id}`, JSON.stringify(updatedLinks));
+
     const { error } = await supabase
       .from('links')
       .update({ name, url: formattedUrl, category, icon })
@@ -79,14 +118,18 @@ export function useLinks() {
       .eq('user_id', user.id);
 
     if (error) {
-      console.error('Error updating link:', error);
-    } else {
-      setLinks(links.map(link => link.id === id ? { ...link, name, url: formattedUrl, category, icon } : link));
+      console.error('Error updating link in Supabase:', error);
     }
   };
 
   const deleteLink = async (id: string) => {
     if (!user) return;
+    
+    // Optimistic update
+    const updatedLinks = links.filter(link => link.id !== id);
+    setLinks(updatedLinks);
+    localStorage.setItem(`links_${user.id}`, JSON.stringify(updatedLinks));
+
     const { error } = await supabase
       .from('links')
       .delete()
@@ -94,9 +137,7 @@ export function useLinks() {
       .eq('user_id', user.id);
 
     if (error) {
-      console.error('Error deleting link:', error);
-    } else {
-      setLinks(links.filter(link => link.id !== id));
+      console.error('Error deleting link from Supabase:', error);
     }
   };
 
